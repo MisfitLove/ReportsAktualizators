@@ -6,6 +6,9 @@ namespace Report_Update_Automation
 {
     public static class MrtFiles
     {
+        private static readonly List<string> ExcludedFolders = new() { "Archive", "Widgets", "Customer Reports", "Dashboard" };
+        private static readonly List<string> ExcludedKnownReports = new() {"SYSTEM_CHECK_REPORT.mrt"};
+        
         //todo use full outer join
         //consider case when file is present in configuration and not present in report binaries
         public static IEnumerable<Report> GetMrtFiles(IReadOnlyCollection<SystemEntityVersion> csvSystemReports, string reportsConfPath, string reportsBinPath)
@@ -13,10 +16,12 @@ namespace Report_Update_Automation
             var configurationReports = Directory
                 .GetFiles(reportsConfPath, "*.mrt", SearchOption.AllDirectories)
                 .Select(x => new FileInfo(x));
-            
+
             var reportFiles = Directory
                 .GetFiles(reportsBinPath, "*.mrt", SearchOption.AllDirectories)
-                .Select(x => new FileInfo(x));
+                .Where(it => !ExcludedFolders.Any(it.Contains))
+                .Select(x => new FileInfo(x))
+                .Where(x => !ExcludedKnownReports.Any(x.Name.Contains));
 
             var allReports = reportFiles
                 .Select(binReport => new Report()
